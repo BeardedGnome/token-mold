@@ -23,6 +23,13 @@ export default class TokenMold {
     this.initHooks();
   }
 
+  /**
+   *
+   * @param {object} level
+   * @param  {...any} args
+   *
+   * @returns {void}
+   */
   static log(level, ...args) {
     // NOTE: Developer Mode doesn't work in Foundry v12
     const shouldLog =
@@ -50,8 +57,13 @@ export default class TokenMold {
     }
   }
 
+  /**
+   *
+   */
   initHooks() {
     TokenMold.log(TokenMold.LOG_LEVEL.Debug, "initHooks");
+
+    // params: Application, jQuery, object
     Hooks.on("renderActorDirectory", (app, html, data) => {
       if (game.user.isGM) {
         this._hookActorDirectory(html);
@@ -63,6 +75,7 @@ export default class TokenMold {
     this.registerSettings();
     this.loadSettings();
 
+    // params: PlaceableObject, boolean
     Hooks.on("hoverToken", (token, hovered) => {
       if (!token || !token.actor) {
         return;
@@ -86,6 +99,7 @@ export default class TokenMold {
     });
 
     Hooks.once("ready", async () => {
+      // params: Application, jQuery, object
       Hooks.on("renderHeadsUpDisplay", (app, html, data) => {
         html.append('<template id="token-mold-overlay"></template>');
         canvas.hud.TokenMold = new TokenMoldOverlay();
@@ -95,11 +109,13 @@ export default class TokenMold {
         return;
       }
 
+      // params: Document, DatabaseDeleteOperation, string
       Hooks.on("deleteToken", (token, options, userId) => {
         if (!canvas.hud.TokenMold) return;
         canvas.hud.TokenMold.clear();
       });
 
+      // params: Document, object, DatabaseCreateOperation, string
       Hooks.on("preCreateToken", (token, data, options, userId) => {
         const scene = token.parent;
         const newData = this._setTokenData(scene, data);
@@ -107,6 +123,7 @@ export default class TokenMold {
         token.updateSource(newData);
       });
 
+      // params: Document, DatabaseCreateOperation, string
       Hooks.on("createToken", (token, options, userId) => {
         if (userId !== game.userId) {
           // filter to single user
@@ -125,6 +142,10 @@ export default class TokenMold {
     });
   }
 
+  /**
+   *
+   * @returns {string[]}
+   */
   get languages() {
     TokenMold.log(TokenMold.LOG_LEVEL.Debug, "languages");
     return [
@@ -169,6 +190,8 @@ export default class TokenMold {
   /**
    * Only loads dicts if the option is set *and* they're not already loaded
    * possible TODO: maybe check if dict is needed?
+   *
+   * @returns {Promise<any>}
    */
   async _loadDicts() {
     TokenMold.log(TokenMold.LOG_LEVEL.Debug, "_loadDicts");
@@ -190,6 +213,10 @@ export default class TokenMold {
     }
   }
 
+  /**
+   *
+   * @returns {Promise<any>}
+   */
   async _loadTable() {
     TokenMold.log(TokenMold.LOG_LEVEL.Debug, "_loadTable");
     let document;
@@ -204,7 +231,11 @@ export default class TokenMold {
     this.adjectives = document;
   }
 
-  // Gets a list of all Rollable Tables available to choose adjectives from.
+  /**
+   * Gets a list of all Rollable Tables available to choose adjectives from.
+   *
+   * @returns {Promise<any>}
+   */
   async _getRolltables() {
     TokenMold.log(TokenMold.LOG_LEVEL.Debug, "_getRolltables");
     const rollTablePacks = game.packs.filter((e) => e.documentName === "RollTable", );
@@ -231,6 +262,12 @@ export default class TokenMold {
     TokenMold.log(TokenMold.LOG_LEVEL.Debug, "Rollable Tables found", this._rollTableList,);
   }
 
+  /**
+   *
+   * @param {jQuery}  html
+   *
+   * @return {Promise<any>}
+   */
   async _hookActorDirectory(html) {
     TokenMold.log(TokenMold.LOG_LEVEL.Debug, "_hookActorDirectory");
     this.section = document.createElement("section");
@@ -244,6 +281,10 @@ export default class TokenMold {
     }
   }
 
+  /**
+   *
+   * @returns {Promise<any>}
+   */
   async _renderActorDirectoryMenu() {
     TokenMold.log(TokenMold.LOG_LEVEL.Debug, "_renderActorDirectoryMenu");
     const section = this.section;
@@ -302,6 +343,8 @@ export default class TokenMold {
    * Always update all checkboxes present. For two reasons:
    *  - Other connected user  changes smth, so we have to update our view as well
    *  - Popout sidebar needs to update on change as well
+   *
+   * @returns {void}
    */
   _updateCheckboxes() {
     TokenMold.log(TokenMold.LOG_LEVEL.Debug, "_updateCheckboxes");
@@ -314,8 +357,10 @@ export default class TokenMold {
 
   /**
    *
-   * @param {*} scene
-   * @param {*} data TokenData
+   * @param {Scene}   scene
+   * @param {object}  data  Represents TokenData
+   *
+   * @return {object}
    */
   _setTokenData(scene, data) {
     TokenMold.log(TokenMold.LOG_LEVEL.Debug, "_setTokenData");
@@ -329,7 +374,7 @@ export default class TokenMold {
 
     // Do this for all tokens, even player created ones
     if (this.data.size.use && TokenMold.SUPPORTED_CREATURESIZE.includes(game.system.id)) {
-      this._setCreatureSize(newData, data, actor, scene.id);
+      this._setCreatureSize(newData, actor, scene);
     }
 
     if (this.counter[scene.id] === undefined) {
@@ -337,7 +382,8 @@ export default class TokenMold {
     }
 
     if (this.data.name.use) {
-      const newName = this._modifyName(newData, data, actor, scene.id);
+      const newName = this._modifyName(data, actor, scene);
+      // Something seems wrong here, but I don't know what
       newData.name = newName;
       foundry.utils.setProperty(newData, "delta.name", newName);
     }
@@ -349,6 +395,12 @@ export default class TokenMold {
     return newData;
   }
 
+  /**
+   *
+   * @param {TokenDocument} token
+   *
+   * @returns {Promise<any>}
+   */
   async _setHP(token) {
     TokenMold.log(TokenMold.LOG_LEVEL.Debug, "_setHP");
 
@@ -365,7 +417,14 @@ export default class TokenMold {
     }
   }
 
-  // Probably not required, but I implemented it before I understood
+  /**
+   * Probably not required, but I implemented it before I understood
+   *
+   * @param {TokenDocument} token
+   * @param {object}        data
+   *
+   * @returns {Promise<any>}
+   */
   async _setDeltaHP(token, data) {
     TokenMold.log(TokenMold.LOG_LEVEL.Debug, "_setDeltaHP");
 
@@ -383,6 +442,10 @@ export default class TokenMold {
     }
   }
 
+  /**
+   *
+   * @returns {Promise<Document[]>}
+   */
   async _refreshSelected() {
     TokenMold.log(TokenMold.LOG_LEVEL.Debug, "_refreshSelected");
     const selected = canvas.tokens.controlled;
@@ -398,6 +461,13 @@ export default class TokenMold {
     canvas.scene.updateEmbeddedDocuments("Token", udata);
   }
 
+  /**
+   *
+   * @param {TokenData} data
+   * @param {Actor}     actor
+   *
+   * @returns {void}
+   */
   _overwriteConfig(data, actor) {
     TokenMold.log(TokenMold.LOG_LEVEL.Debug, "_overwriteConfig");
     for (let [key, value] of Object.entries(this.data.config)) {
@@ -418,6 +488,12 @@ export default class TokenMold {
     }
   }
 
+  /**
+   *
+   * @param {TokenDocument} token
+   *
+   * @returns {Promise<any>}
+   */
   async _rollHP(token) {
     TokenMold.log(TokenMold.LOG_LEVEL.Debug, "_rollHP");
     const hpProperties = {
@@ -454,12 +530,20 @@ export default class TokenMold {
       ui.notifications.warn("Can not randomize hp. HP formula is not set.");
       return foundry.utils.getProperty(token.actor, "system.attributes.hp.value");
     }
-    return;
   }
 
-  _modifyName(newData, data, actor, sceneId) {
+  /**
+   *
+   * @param {TokenData} data
+   * @param {Actor}     actor
+   * @param {Scene}     scene
+   *
+   * @return {void}
+   */
+  _modifyName(data, actor, scene) {
     TokenMold.log(TokenMold.LOG_LEVEL.Debug, "_modifyName");
-    let name = actor.prototypeToken.name;
+    //let name = actor.prototypeToken.name; // from base actor data
+    let name = data.name; // from TokenData
 
     if (["remove", "replace"].includes(this.data.name.replace) && !(this.data.name.baseNameOverride && event.getModifierState("Shift"))) {
       name = "";
@@ -469,14 +553,12 @@ export default class TokenMold {
     if (this.data.name.number.use) {
       let number = 0;
       // Check if number in session database
-      if (this.counter[sceneId][data.actorId] !== undefined) {
-        number = this.counter[sceneId][data.actorId];
+      if (this.counter[scene.id][data.actorId] !== undefined) {
+        number = this.counter[scene.id][data.actorId];
       } else {
         // Extract number from last created token with the same actor ID
         const sameTokens =
-          game.scenes
-            .get(sceneId)
-            .tokens.filter((e) => e.actorId === data.actorId) || [];
+          scene.tokens.filter((e) => e.actorId === data.actorId) || [];
         if (sameTokens.length !== 0) {
           const lastTokenName = sameTokens[sameTokens.length - 1].name;
           // Split by prefix and take last element
@@ -526,7 +608,7 @@ export default class TokenMold {
           break;
       }
 
-      this.counter[sceneId][data.actorId] = number;
+      this.counter[scene.id][data.actorId] = number;
 
       numberSuffix =
         this.data.name.number.prefix + number + this.data.name.number.suffix;
@@ -553,6 +635,12 @@ export default class TokenMold {
     return name;
   }
 
+  /**
+   *
+   * @param {object} items
+   *
+   * @returns {string}
+   */
   _chooseWeighted(items) {
     TokenMold.log(TokenMold.LOG_LEVEL.Debug, "_chooseWeighted");
     var keys = Object.keys(items);
@@ -564,6 +652,14 @@ export default class TokenMold {
     return keys[vals.filter((elem) => elem <= rand).length];
   }
 
+  /**
+   *
+   * @param {string} txt
+   * @param {string} fromCase
+   * @param {string} toCase
+   *
+   * @returns {string}
+   */
   _chgCase(txt, fromCase, toCase) {
     TokenMold.log(TokenMold.LOG_LEVEL.Debug, "_chgCase");
     var res = "";
@@ -585,7 +681,10 @@ export default class TokenMold {
    *  - Choose a language (depending on settings chosen)
    *  - Choose a random starting trigram for the language, weighted by frequency used
    *  - Go on choosing letters like before, using the previous found letter as starting letter of the trigram, until maximum is reached
-   * @param {*} actor
+   *
+   * @param {Actor} actor
+   *
+   * @return {string}
    */
   _pickNewName(actor) {
     TokenMold.log(TokenMold.LOG_LEVEL.Debug, "_pickNewName");
@@ -639,6 +738,13 @@ export default class TokenMold {
     return newName;
   }
 
+  /**
+   *
+   * @param {string} num
+   * @param {string} letterStyle
+   *
+   * @return {number}
+   */
   _dealphabetize(num, letterStyle) {
     TokenMold.log(TokenMold.LOG_LEVEL.Debug, "_dealphabetize");
     if (num === "0") {
@@ -657,6 +763,13 @@ export default class TokenMold {
     return ret;
   }
 
+  /**
+   *
+   * @param {number} num
+   * @param {string} letterStyle
+   *
+   * @return {string}
+   */
   _alphabetize(num, letterStyle) {
     TokenMold.log(TokenMold.LOG_LEVEL.Debug, "_alphabetize");
     let ret = "";
@@ -676,7 +789,13 @@ export default class TokenMold {
     return ret;
   }
 
-  // Romanizes a number, code is from : http://blog.stevenlevithan.com/archives/javascript-roman-numeral-converter
+  /**
+   * Romanizes a number, code is from : http://blog.stevenlevithan.com/archives/javascript-roman-numeral-converter
+   *
+   * @param {number} num
+   *
+   * @return {string}
+   */
   _romanize(num) {
     TokenMold.log(TokenMold.LOG_LEVEL.Debug, "_romanize");
     if (!+num) {
@@ -718,12 +837,18 @@ export default class TokenMold {
       roman = "",
       i = 3;
     while (i--) {
-      roman = (key[+digits.pop() + i * 10] || "") + roman;
+      roman = (key[+digits.pop() + (i * 10)] || "") + roman;
     }
     return Array(+digits.join("") + 1).join("M") + roman;
   }
 
-  // code is from : http://blog.stevenlevithan.com/archives/javascript-roman-numeral-converter
+  /**
+   * code is from : http://blog.stevenlevithan.com/archives/javascript-roman-numeral-converter
+   *
+   * @param {string} rom
+   *
+   * @return {number}
+   */
   _deromanize(rom) {
     TokenMold.log(TokenMold.LOG_LEVEL.Debug, "_deromanize");
     if (typeof rom !== "string") {
@@ -758,9 +883,18 @@ export default class TokenMold {
     return num;
   }
 
-  // Scale tokens according to set creature size
-  // DnD 5e and PF2e only
-  _setCreatureSize(newData, data, actor, sceneId) {
+
+  /**
+   * Scale tokens according to set creature size
+   * DnD 5e and PF2e only
+   *
+   * @param {object}    newData
+   * @param {Actor}     actor
+   * @param {Scene}     scene
+   *
+   * @return {void}
+   */
+  _setCreatureSize(newData, actor, scene) {
     TokenMold.log(TokenMold.LOG_LEVEL.Debug, "_setCreatureSize");
     const sizes = {
       tiny: 0.5,
@@ -777,8 +911,6 @@ export default class TokenMold {
     if (tSize === undefined) {
       return;
     }
-
-    const scene = game.scenes.get(sceneId);
 
     // If scene has feet/ft as unit, scale accordingly
     //  5 ft => normal size
@@ -803,6 +935,10 @@ export default class TokenMold {
     }
   }
 
+  /**
+   *
+   * @return {void}
+   */
   registerSettings() {
     TokenMold.log(TokenMold.LOG_LEVEL.Debug, "registerSettings");
     // register settings
@@ -819,6 +955,10 @@ export default class TokenMold {
     });
   }
 
+  /**
+   *
+   * @return {object}
+   */
   defaultSettings() {
     TokenMold.log(TokenMold.LOG_LEVEL.Info, "Loading defaultSettings");
     return {
@@ -910,6 +1050,10 @@ export default class TokenMold {
     };
   }
 
+  /**
+   *
+   * @return {void}
+   */
   loadSettings() {
     TokenMold.log(TokenMold.LOG_LEVEL.Debug, "loadSettings");
     this.data = game.settings.get("Token-Mold", "everyone");
@@ -945,6 +1089,10 @@ export default class TokenMold {
     TokenMold.log(TokenMold.LOG_LEVEL.Debug, "Loading Settings", this.data, );
   }
 
+  /**
+   *
+   * @return {object}
+   */
   get dndDefaultNameOptions() {
     TokenMold.log(TokenMold.LOG_LEVEL.Debug, "dndDefaultNameOptions");
     return {
@@ -998,6 +1146,10 @@ export default class TokenMold {
     };
   }
 
+  /**
+   *
+   * @return {Promise<>}
+   */
   async saveSettings() {
     TokenMold.log(TokenMold.LOG_LEVEL.Debug, "saveSettings");
     if (this.adjectives || this.adjectives.uuid !== this.data.name.prefix.table) {
@@ -1015,6 +1167,10 @@ export default class TokenMold {
     TokenMold.log(TokenMold.LOG_LEVEL.Debug, "Saving Settings", this.data, );
   }
 
+  /**
+   *
+   * @return {Promise<object>}
+   */
   async _getBarAttributes() {
     TokenMold.log(TokenMold.LOG_LEVEL.Debug, "_getBarAttributes");
     const types = CONFIG.Actor.documentClass.TYPES.filter(x => x !== 'base');
@@ -1046,6 +1202,13 @@ export default class TokenMold {
 }
 
 class TokenMoldForm extends FormApplication {
+
+  /**
+   *
+   * @param {any}    object
+   * @param {object} options
+   *
+   */
   constructor(object, options) {
     TokenMold.log(TokenMold.LOG_LEVEL.Debug, "TokenMoldForm");
     super(object, options);
@@ -1053,6 +1216,10 @@ class TokenMoldForm extends FormApplication {
     this.barAttributes = object.barAttributes || [];
   }
 
+ /**
+   *
+   * @return {ApplicationOptions}
+   */
   static get defaultOptions() {
     TokenMold.log(TokenMold.LOG_LEVEL.Debug, "defaultOptions");
     const options = super.defaultOptions;
@@ -1075,6 +1242,10 @@ class TokenMoldForm extends FormApplication {
     return options;
   }
 
+  /**
+   *
+   * @return {HeaderButton[]}
+   */
   _getHeaderButtons() {
     TokenMold.log(TokenMold.LOG_LEVEL.Debug, "_getHeaderButtons");
     let btns = super._getHeaderButtons();
@@ -1082,7 +1253,13 @@ class TokenMoldForm extends FormApplication {
     return btns;
   }
 
-  async _onSubmit(ev) {
+  /**
+   *
+   * @param {object}  options
+   *
+   * @return {Promise<FormApplication>}
+   */
+  async _onSubmit(options) {
     TokenMold.log(TokenMold.LOG_LEVEL.Debug, "_onSubmit");
     const attrGroups = $(this.form).find(".attributes");
     let attrs = [];
@@ -1117,9 +1294,16 @@ class TokenMoldForm extends FormApplication {
     });
 
     this.data.name.options.attributes = attributes;
-    super._onSubmit(ev);
+    super._onSubmit(options);
   }
 
+  /**
+   *
+   * @param {Event}   event
+   * @param {object}  formData
+   *
+   * @return {Promise<any>}
+   */
   async _updateObject(event, formData) {
     TokenMold.log(TokenMold.LOG_LEVEL.Debug, "_updateObject");
     let min = formData["name.options.min"],
@@ -1164,6 +1348,10 @@ class TokenMoldForm extends FormApplication {
     this.object.saveSettings();
   }
 
+  /**
+   *
+   * @return {object}
+   */
   getData() {
     TokenMold.log(TokenMold.LOG_LEVEL.Debug, "getData");
     let data = {
@@ -1190,6 +1378,10 @@ class TokenMoldForm extends FormApplication {
     return data;
   }
 
+  /**
+   *
+   * @return {object[]}
+   */
   static get defaultAttrs() {
     TokenMold.log(TokenMold.LOG_LEVEL.Debug, "defaultAttrs");
     if (TokenMold.SUPPORTED_5ESKILLS.includes(game.system.id)) {
@@ -1208,6 +1400,10 @@ class TokenMoldForm extends FormApplication {
     }
   }
 
+  /**
+   *
+   * @return {object[]}
+   */
   get defaultIcons() {
     TokenMold.log(TokenMold.LOG_LEVEL.Debug, "defaultIcons");
     return [
@@ -1240,11 +1436,20 @@ class TokenMoldForm extends FormApplication {
     ];
   }
 
+  /**
+   *
+   * @return {any}
+   */
   get languages() {
     TokenMold.log(TokenMold.LOG_LEVEL.Debug, "languages");
     return this.object.languages;
   }
 
+  /**
+   *
+   * @param {jQuery}  html
+   *
+   */
   activateListeners(html) {
     TokenMold.log(TokenMold.LOG_LEVEL.Debug, "activateListeners");
     super.activateListeners(html);
@@ -1358,6 +1563,10 @@ class TokenMoldForm extends FormApplication {
     });
   }
 
+  /**
+   *
+   * @return {object[][]}
+   */
   get _actorAttributes() {
     TokenMold.log(TokenMold.LOG_LEVEL.Debug, "_actorAttributes");
     let getAttributes = function (data, parent) {
