@@ -418,32 +418,6 @@ export default class TokenMold {
   }
 
   /**
-   * Probably not required, but I implemented it before I understood
-   *
-   * @param {TokenDocument} token
-   * @param {object}        data
-   *
-   * @returns {Promise<any>}
-   */
-  async _setDeltaHP(token, data) {
-    TokenMold.log(TokenMold.LOG_LEVEL.Debug, "_setDeltaHP");
-
-    if (!token.actor || (token.actorLink && this.settings.unlinkedOnly)) {
-      // Don't for linked token
-      return;
-    }
-
-    if (TokenMold.SUPPORTED_ROLLHP.includes(game.system.id)) {
-      if (this.settings.hp.use) {
-        // TODO Delete this method
-        const val = await this._rollHP(token);
-        foundry.utils.setProperty(data, "delta.system.attributes.hp.value", val);
-        foundry.utils.setProperty(data, "delta.system.attributes.hp.max", val);
-      }
-    }
-  }
-
-  /**
    *
    * @returns {Promise<Document[]>}
    */
@@ -454,7 +428,7 @@ export default class TokenMold {
     for (const token of selected) {
       const newData = this._setTokenData(canvas.scene, token.document.toObject());
 
-      await this._setDeltaHP(token.document, newData);
+      await this._setHP(token.document);
 
       udata.push(newData);
     }

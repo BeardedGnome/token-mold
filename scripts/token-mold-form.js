@@ -333,6 +333,7 @@ export class TokenMoldForm extends FormApplication {
         const selected = canvas.tokens.controlled;
         let udata = [];
         for (const token of selected) {
+          // Should this be checking for actorLink && unlinkedOnly?
           const newName = this.object._pickNewName(token.actor);
           udata.push({
             _id: token.id,
