@@ -9,7 +9,7 @@ export class TokenMoldForm extends FormApplication {
     constructor(object, options) {
       TokenMold.log(TokenMold.LOG_LEVEL.Debug, "TokenMoldForm");
       super(object, options);
-      this.data = object.data;
+      this.settings = object.settings;
       this.barAttributes = object.barAttributes || [];
     }
 
@@ -132,7 +132,7 @@ export class TokenMoldForm extends FormApplication {
           ? suffix
           : formData["name.number.suffix"];
 
-      this.object.settings = foundry.utils.mergeObject(this.data, formData);
+      this.object.settings = foundry.utils.mergeObject(this.settings, formData);
 
       if (this._resetOptions === true) {
         const dndOptions = this.object.dndDefaultNameOptions;
@@ -152,7 +152,7 @@ export class TokenMoldForm extends FormApplication {
     getData() {
       TokenMold.log(TokenMold.LOG_LEVEL.Debug, "getData");
       let data = {
-        data: this.data,
+        settings: this.settings,
       };
       data.numberStyles = {
         ar: "arabic numerals",

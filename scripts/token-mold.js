@@ -278,7 +278,7 @@ export default class TokenMold {
     const dirHeader = html[0].querySelector(".directory-header");
     dirHeader.parentNode.insertBefore(this.section, dirHeader);
 
-    if (this.data !== undefined) {
+    if (this.settings !== undefined) {
       this._renderActorDirectoryMenu();
     }
   }
@@ -321,7 +321,7 @@ export default class TokenMold {
     const inputs = section.querySelectorAll('input[type="checkbox"]');
     for (let checkbox of inputs) {
       checkbox.addEventListener("change", (ev) => {
-        foundry.utils.setProperty(this.data, ev.target.name, ev.target.checked);
+        foundry.utils.setProperty(this.settings, ev.target.name, ev.target.checked);
         this.saveSettings();
       });
     }
@@ -335,7 +335,7 @@ export default class TokenMold {
         if (this.form === undefined) {
           this.form = new TokenMoldForm(this);
         } else {
-          this.form.data = this.data;
+          this.form.settings = this.settings;
         }
         this.form.render(true);
       });
@@ -353,23 +353,23 @@ export default class TokenMold {
     const inputs = document.querySelectorAll("section.token-mold input");
     inputs.forEach((el) => {
       const name = el.name;
-      el.checked = foundry.utils.getProperty(this.data, name);
+      el.checked = foundry.utils.getProperty(this.settings, name);
     });
   }
 
   /**
    *
    * @param {Scene}   scene
-   * @param {object}  data  Represents TokenData
+   * @param {object}  tokenData
    *
    * @return {object}
    */
-  _setTokenData(scene, data) {
+  _setTokenData(scene, tokenData) {
     TokenMold.log(TokenMold.LOG_LEVEL.Debug, "_setTokenData");
-    const actor = game.actors.get(data.actorId);
-    const newData = { _id: data._id };
+    const actor = game.actors.get(tokenData.actorId);
+    const newData = { _id: tokenData._id };
 
-    if (!actor || (data.actorLink && this.settings.unlinkedOnly)) {
+    if (!actor || (tokenData.actorLink && this.settings.unlinkedOnly)) {
       // Don't for linked token
       return newData;
     }
@@ -384,7 +384,7 @@ export default class TokenMold {
     }
 
     if (this.settings.name.use) {
-      const newName = this._modifyName(data, actor, scene);
+      const newName = this._modifyName(tokenData, actor, scene);
       newData.name = newName;
     }
 
@@ -464,27 +464,27 @@ export default class TokenMold {
 
   /**
    *
-   * @param {TokenData} data
+   * @param {TokenData} tokenData
    * @param {Actor}     actor
    *
    * @returns {void}
    */
-  _overwriteConfig(data, actor) {
+  _overwriteConfig(tokenData, actor) {
     TokenMold.log(TokenMold.LOG_LEVEL.Debug, "_overwriteConfig");
     for (let [key, value] of Object.entries(this.settings.config)) {
       if (value.use !== true) {
         continue;
       }
       if (value.value !== undefined) {
-        data[key] = value.value;
+        tokenData[key] = value.value;
       } else if (value.min !== undefined && value.max !== undefined) {
-        let val = data[key] || 1;
-        data[key] = (val * Math.floor((Math.random() * (value.max - value.min) + value.min) * 100, )) / 100;
+        let val = tokenData[key] || 1;
+        tokenData[key] = (val * Math.floor((Math.random() * (value.max - value.min) + value.min) * 100, )) / 100;
       } else if (value.attribute !== undefined && (value.attribute === "" || foundry.utils.getProperty(actor, value.attribute) !== undefined) ) {
-        data[key].attribute = value.attribute;
+        tokenData[key].attribute = value.attribute;
       } else if ( value.attribute === undefined && value.min === undefined && value.max === undefined && value.value === undefined ) {
         // Random mirroring
-        data[key] = Boolean(Math.round(Math.random()));
+        tokenData[key] = Boolean(Math.round(Math.random()));
       }
     }
   }
@@ -535,16 +535,15 @@ export default class TokenMold {
 
   /**
    *
-   * @param {TokenData} data
+   * @param {TokenData} tokenData
    * @param {Actor}     actor
    * @param {Scene}     scene
    *
    * @return {void}
    */
-  _modifyName(data, actor, scene) {
+  _modifyName(tokenData, actor, scene) {
     TokenMold.log(TokenMold.LOG_LEVEL.Debug, "_modifyName");
-    //let name = actor.prototypeToken.name; // from base actor data
-    let name = data.name; // from TokenData
+    let name = tokenData.name;
 
     if (["remove", "replace"].includes(this.settings.name.replace) && !(this.settings.name.baseNameOverride && event.getModifierState("Shift"))) {
       name = "";
@@ -554,12 +553,12 @@ export default class TokenMold {
     if (this.settings.name.number.use) {
       let number = 0;
       // Check if number in session database
-      if (this.counter[scene.id][data.actorId] !== undefined) {
-        number = this.counter[scene.id][data.actorId];
+      if (this.counter[scene.id][tokenData.actorId] !== undefined) {
+        number = this.counter[scene.id][tokenData.actorId];
       } else {
         // Extract number from last created token with the same actor ID
         const sameTokens =
-          scene.tokens.filter((e) => e.actorId === data.actorId) || [];
+          scene.tokens.filter((e) => e.actorId === tokenData.actorId) || [];
         if (sameTokens.length !== 0) {
           const lastTokenName = sameTokens[sameTokens.length - 1].name;
           // Split by prefix and take last element
@@ -609,7 +608,7 @@ export default class TokenMold {
           break;
       }
 
-      this.counter[scene.id][data.actorId] = number;
+      this.counter[scene.id][tokenData.actorId] = number;
 
       numberSuffix =
         this.settings.name.number.prefix + number + this.settings.name.number.suffix;
@@ -950,7 +949,7 @@ export default class TokenMold {
       type: Object,
       scope: "world",
       onChange: (data) => {
-        this.data = data;
+        this.settings = data;
         this._updateCheckboxes();
       },
     });
@@ -1057,10 +1056,10 @@ export default class TokenMold {
    */
   loadSettings() {
     TokenMold.log(TokenMold.LOG_LEVEL.Debug, "loadSettings");
-    this.data = game.settings.get("Token-Mold", "everyone");
+    this.settings = game.settings.get("Token-Mold", "everyone");
     // Check for old data
-    if (!this.data) {
-      this.data = this.defaultSettings();
+    if (!this.settings) {
+      this.settings = this.defaultSettings();
     }
     if (this.settings.config.data !== undefined) {
       for (let [key, value] of Object.entries(this.settings.config.data)) {
@@ -1071,13 +1070,13 @@ export default class TokenMold {
       }
       delete this.settings.config.data;
     }
-    if (foundry.utils.getProperty(this.data, "overlay.attrs") && this.settings.overlay.attrs.length === 0) {
+    if (foundry.utils.getProperty(this.settings, "overlay.attrs") && this.settings.overlay.attrs.length === 0) {
       delete this.settings.overlay.attrs;
     }
-    if (foundry.utils.getProperty(this.data, "name.options.attributes") && this.settings.name.options.attributes.length === 0) {
+    if (foundry.utils.getProperty(this.settings, "name.options.attributes") && this.settings.name.options.attributes.length === 0) {
       delete this.settings.name.options.attributes;
     }
-    this.data = foundry.utils.mergeObject(this.defaultSettings(), this.data);
+    this.settings = foundry.utils.mergeObject(this.defaultSettings(), this.settings);
 
     if (TokenMold.SUPPORTED_5ESKILLS.includes(game.system.id)) {
       if (this.settings.name.options === undefined) {
@@ -1087,7 +1086,7 @@ export default class TokenMold {
       }
     }
     this._loadDicts();
-    TokenMold.log(TokenMold.LOG_LEVEL.Debug, "Loading Settings", this.data, );
+    TokenMold.log(TokenMold.LOG_LEVEL.Debug, "Loading Settings", this.settings, );
   }
 
   /**
@@ -1163,9 +1162,9 @@ export default class TokenMold {
       ui.notifications.warn(game.i18n.localize("tmold.warn.removeName"));
     }
 
-    await game.settings.set("Token-Mold", "everyone", this.data);
+    await game.settings.set("Token-Mold", "everyone", this.settings);
     this._loadDicts();
-    TokenMold.log(TokenMold.LOG_LEVEL.Debug, "Saving Settings", this.data, );
+    TokenMold.log(TokenMold.LOG_LEVEL.Debug, "Saving Settings", this.settings, );
   }
 
   /**
