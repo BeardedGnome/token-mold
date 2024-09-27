@@ -132,12 +132,12 @@ export class TokenMoldForm extends FormApplication {
           ? suffix
           : formData["name.number.suffix"];
 
-      this.object.data = foundry.utils.mergeObject(this.data, formData);
+      this.object.settings = foundry.utils.mergeObject(this.data, formData);
 
       if (this._resetOptions === true) {
         const dndOptions = this.object.dndDefaultNameOptions;
-        this.object.data.name.options.default = dndOptions.default;
-        this.object.data.name.options.attributes = dndOptions.attributes;
+        this.object.settings.name.options.default = dndOptions.default;
+        this.object.settings.name.options.attributes = dndOptions.attributes;
         this._resetOptions = false;
 
         this.render();
@@ -330,14 +330,13 @@ export class TokenMoldForm extends FormApplication {
       }
 
       html[0].querySelector(".reroll-names").addEventListener("click", (ev) => {
-        const tokens = canvas.tokens.controlled;
+        const selected = canvas.tokens.controlled;
         let udata = [];
-        for (let token of tokens) {
-          const newName = this.object._pickNewName(token.actor.data);
+        for (const token of selected) {
+          const newName = this.object._pickNewName(token.actor);
           udata.push({
             _id: token.id,
-            name: newName,
-            "delta.name": newName,
+            name: newName
           });
         }
 
