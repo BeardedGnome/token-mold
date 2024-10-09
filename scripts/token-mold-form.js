@@ -1,4 +1,7 @@
-export class TokenMoldForm extends FormApplication {
+import  TokenConsts  from "./token-consts.js"
+import  TokenLog  from "./token-log.js";
+
+export default class TokenMoldForm extends FormApplication {
 
     /**
      *
@@ -7,7 +10,7 @@ export class TokenMoldForm extends FormApplication {
      *
      */
     constructor(object, options) {
-      TokenMold.log(TokenMold.LOG_LEVEL.Debug, "TokenMoldForm");
+      TokenLog.log(TokenLog.LOG_LEVEL.Debug, "TokenMoldForm: constructor");
       super(object, options);
       this.settings = object.settings;
       this.barAttributes = object.barAttributes || [];
@@ -18,7 +21,7 @@ export class TokenMoldForm extends FormApplication {
      * @return {ApplicationOptions}
      */
     static get defaultOptions() {
-      TokenMold.log(TokenMold.LOG_LEVEL.Debug, "defaultOptions");
+      TokenLog.log(TokenLog.LOG_LEVEL.Debug, "TokenMoldForm: defaultOptions");
       const options = super.defaultOptions;
       options.template = "modules/token-mold/templates/token-mold.html";
       options.width = 420;
@@ -44,7 +47,7 @@ export class TokenMoldForm extends FormApplication {
      * @return {HeaderButton[]}
      */
     _getHeaderButtons() {
-      TokenMold.log(TokenMold.LOG_LEVEL.Debug, "_getHeaderButtons");
+      TokenLog.log(TokenLog.LOG_LEVEL.Debug, "TokenMoldForm: _getHeaderButtons");
       let btns = super._getHeaderButtons();
       btns[0].label = "Save & Close";
       return btns;
@@ -57,7 +60,7 @@ export class TokenMoldForm extends FormApplication {
      * @return {Promise<FormApplication>}
      */
     async _onSubmit(options) {
-      TokenMold.log(TokenMold.LOG_LEVEL.Debug, "_onSubmit");
+      TokenLog.log(TokenLog.LOG_LEVEL.Debug, "TokenMoldForm: _onSubmit");
       const attrGroups = $(this.form).find(".attributes");
       let attrs = [];
       attrGroups.each((idx, e) => {
@@ -102,7 +105,7 @@ export class TokenMoldForm extends FormApplication {
      * @return {Promise<any>}
      */
     async _updateObject(event, formData) {
-      TokenMold.log(TokenMold.LOG_LEVEL.Debug, "_updateObject");
+      TokenLog.log(TokenLog.LOG_LEVEL.Debug, "TokenMoldForm: _updateObject");
       let min = formData["name.options.min"],
         max = formData["name.options.max"];
       if (min < 0) {
@@ -150,7 +153,7 @@ export class TokenMoldForm extends FormApplication {
      * @return {object}
      */
     getData() {
-      TokenMold.log(TokenMold.LOG_LEVEL.Debug, "getData");
+      TokenLog.log(TokenLog.LOG_LEVEL.Debug, "TokenMoldForm: getData");
       let data = {
         settings: this.settings,
       };
@@ -165,13 +168,13 @@ export class TokenMoldForm extends FormApplication {
       data.displayModes = CONST.TOKEN_DISPLAY_MODES;
       data.dispositions = CONST.TOKEN_DISPOSITIONS;
       data.defaultIcons = this.defaultIcons;
-      data.showCreatureSize = TokenMold.SUPPORTED_CREATURESIZE.includes(game.system.id);
-      data.showHP = TokenMold.SUPPORTED_ROLLHP.includes(game.system.id);
+      data.showCreatureSize = TokenConsts.SUPPORTED_CREATURESIZE.includes(game.system.id);
+      data.showHP = TokenConsts.SUPPORTED_ROLLHP.includes(game.system.id);
       data.showSystem = this.object.systemSupported;
       data.languages = this.languages;
       data.rollTableList = this.object._rollTableList;
       data.visionLabel = game.i18n.localize("TOKEN.VisionEnabled");
-      TokenMold.log(TokenMold.LOG_LEVEL.Debug, "Prepared data", data, this._rollTableList, );
+      TokenLog.log(TokenLog.LOG_LEVEL.Debug, "TokenMoldForm: Prepared data", data, this._rollTableList, );
       return data;
     }
 
@@ -180,8 +183,8 @@ export class TokenMoldForm extends FormApplication {
      * @return {object[]}
      */
     static get defaultAttrs() {
-      TokenMold.log(TokenMold.LOG_LEVEL.Debug, "defaultAttrs");
-      if (TokenMold.SUPPORTED_5ESKILLS.includes(game.system.id)) {
+      TokenLog.log(TokenLog.LOG_LEVEL.Debug, "TokenMoldForm: defaultAttrs");
+      if (TokenConsts.SUPPORTED_5ESKILLS.includes(game.system.id)) {
         return [
           {
             icon: '&#xf06e;', // eye
@@ -202,7 +205,7 @@ export class TokenMoldForm extends FormApplication {
      * @return {object[]}
      */
     get defaultIcons() {
-      TokenMold.log(TokenMold.LOG_LEVEL.Debug, "defaultIcons");
+      TokenLog.log(TokenLog.LOG_LEVEL.Debug, "TokenMoldForm: defaultIcons");
       return [
         "&#xf06e;", // eye
         "&#xf3ed;", //fas fa-shield-alt"></i>',
@@ -238,7 +241,7 @@ export class TokenMoldForm extends FormApplication {
      * @return {any}
      */
     get languages() {
-      TokenMold.log(TokenMold.LOG_LEVEL.Debug, "languages");
+      TokenLog.log(TokenLog.LOG_LEVEL.Debug, "TokenMoldForm: languages");
       return this.object.languages;
     }
 
@@ -248,7 +251,7 @@ export class TokenMoldForm extends FormApplication {
      *
      */
     activateListeners(html) {
-      TokenMold.log(TokenMold.LOG_LEVEL.Debug, "activateListeners");
+      TokenLog.log(TokenLog.LOG_LEVEL.Debug, "TokenMoldForm: activateListeners");
       super.activateListeners(html);
 
       html.find(".add-attribute").on("click", (ev) => {
@@ -365,7 +368,7 @@ export class TokenMoldForm extends FormApplication {
      * @return {object[][]}
      */
     get _actorAttributes() {
-      TokenMold.log(TokenMold.LOG_LEVEL.Debug, "_actorAttributes");
+      TokenLog.log(TokenLog.LOG_LEVEL.Debug, "TokenMoldForm: _actorAttributes");
       let getAttributes = function (data, parent) {
         parent = parent || [];
         let valid = [];
@@ -380,7 +383,7 @@ export class TokenMoldForm extends FormApplication {
         return valid;
       };
 
-      let barAttributes = [];
+      let attributeList = [];
 
       const types = Actor.implementation.TYPES.filter(x => x !== 'base');
       const shellMap = new Map( types.map((t) => [t, new Actor.implementation({ name: t, type: t })]), );
@@ -389,10 +392,10 @@ export class TokenMoldForm extends FormApplication {
         // find dups
         for (let attr of newAttributes) {
           // Search if attribute already found
-          let dup = barAttributes.find((el) => el[1].includes(attr));
+          let dup = attributeList.find((el) => el[1].includes(attr));
           // If not found,  add to attributes
           if (dup === undefined) {
-            barAttributes.push([key].concat(attr));
+            attributeList.push([key].concat(attr));
           } else {
             // if found add actor type to list
             dup[0] += ", " + key;
@@ -401,7 +404,7 @@ export class TokenMoldForm extends FormApplication {
       });
       // Sort in groups by first element
       let groups = {};
-      for (var attr of barAttributes) {
+      for (var attr of attributeList) {
         const split = attr[1].split(".");
         const document = attr[0];
         const group = split[0];
@@ -414,7 +417,7 @@ export class TokenMoldForm extends FormApplication {
         });
       }
       // also populate with some calculated data for dnd5e, that is not in the template.json
-      if (TokenMold.SUPPORTED_5ESKILLS.includes(game.system.id)) {
+      if (TokenConsts.SUPPORTED_5ESKILLS.includes(game.system.id)) {
         let sortFun = function (a, b) {
           if (a.attribute > b.attribute) {
             return 1;

@@ -1,23 +1,11 @@
-import { TokenMoldForm } from "./token-mold-form.js";
-import { TokenMoldOverlay } from "./token-mold-overlay.js";
+import  TokenConsts  from "./token-consts.js"
+import  TokenLog  from "./token-log.js";
+import  TokenMoldForm  from "./token-mold-form.js";
+import  TokenMoldOverlay  from "./token-mold-overlay.js";
 
 export default class TokenMold {
-  static MODULEID = "token-mold";
-  static LOG_LEVEL = Object.freeze({
-    Debug: 0,
-    Info: 1,
-    Warn: 2,
-    Error: 3,
-  });
-  static CURRENT_LOG_LEVEL = TokenMold.LOG_LEVEL.Info;
-
-  static SUPPORTED_SYSTEMS = ["dnd5e", "pf2e", "sfrpg", "sw5e", "dcc"];
-  static SUPPORTED_ROLLHP = ["dnd5e", "sw5e", "dcc"];
-  static SUPPORTED_CREATURESIZE = ["dnd5e", "pf2e"];
-  static SUPPORTED_5ESKILLS = ["dnd5e", "sw5e"];
-
   constructor() {
-    TokenMold.log(TokenMold.LOG_LEVEL.Debug, "TokenMold");
+    TokenLog.log(TokenLog.LOG_LEVEL.Debug, "TokenMold: constructor");
     this.counter = {};
     this._rollTableList = {};
     this.dict = null;
@@ -27,43 +15,9 @@ export default class TokenMold {
 
   /**
    *
-   * @param {object} level
-   * @param  {...any} args
-   *
-   * @returns {void}
-   */
-  static log(level, ...args) {
-    // NOTE: Developer Mode doesn't work in Foundry v12
-    const shouldLog =
-      level >= TokenMold.CURRENT_LOG_LEVEL ||
-      game.modules
-        .get("_dev-mode")
-        ?.api?.getPackageDebugValue(TokenMold.MODULEID);
-
-    if (shouldLog) {
-      switch (level) {
-        case TokenMold.LOG_LEVEL.Error:
-          console.error("Token Mold", "|", ...args);
-          break;
-        case TokenMold.LOG_LEVEL.Warn:
-          console.warn("Token Mold", "|", ...args);
-          break;
-        case TokenMold.LOG_LEVEL.Info:
-          console.info("Token Mold", "|", ...args);
-          break;
-        case TokenMold.LOG_LEVEL.Debug:
-        default:
-          console.debug("Token Mold", "|", ...args);
-          break;
-      }
-    }
-  }
-
-  /**
-   *
    */
   initHooks() {
-    TokenMold.log(TokenMold.LOG_LEVEL.Debug, "initHooks");
+    TokenLog.log(TokenLog.LOG_LEVEL.Debug, "initHooks");
 
     // params: Application, jQuery, object
     Hooks.on("renderActorDirectory", (app, html, data) => {
@@ -72,7 +26,7 @@ export default class TokenMold {
       }
     });
 
-    this.systemSupported = TokenMold.SUPPORTED_SYSTEMS.includes(game.system.id);
+    this.systemSupported = TokenConsts.SUPPORTED_SYSTEMS.includes(game.system.id);
 
     this.registerSettings();
     this.loadSettings();
@@ -121,7 +75,7 @@ export default class TokenMold {
       Hooks.on("preCreateToken", (token, data, options, userId) => {
         const scene = token.parent;
         const newData = this._setTokenData(scene, data);
-        TokenMold.log(TokenMold.LOG_LEVEL.Debug, "preCreateToken", token, data, newData, );
+        TokenLog.log(TokenLog.LOG_LEVEL.Debug, "preCreateToken", token, data, newData, );
         token.updateSource(newData);
       });
 
@@ -131,7 +85,7 @@ export default class TokenMold {
           // filter to single user
           return;
         }
-        TokenMold.log(TokenMold.LOG_LEVEL.Debug, "createToken", token, );
+        TokenLog.log(TokenLog.LOG_LEVEL.Debug, "createToken", token, );
         this._setHP(token);
       });
 
@@ -149,7 +103,7 @@ export default class TokenMold {
    * @returns {string[]}
    */
   get languages() {
-    TokenMold.log(TokenMold.LOG_LEVEL.Debug, "languages");
+    TokenLog.log(TokenLog.LOG_LEVEL.Debug, "languages");
     return [
       "afrikaans",
       "albanian",
@@ -196,7 +150,7 @@ export default class TokenMold {
    * @returns {Promise<any>}
    */
   async _loadDicts() {
-    TokenMold.log(TokenMold.LOG_LEVEL.Debug, "_loadDicts");
+    TokenLog.log(TokenLog.LOG_LEVEL.Debug, "_loadDicts");
     // Remove if replace is unset
     if (!game.user || !game.user.isGM || this.settings.name.replace !== "replace") {
       // Useful to free up memory? its "just" up to 17MB...
@@ -220,7 +174,7 @@ export default class TokenMold {
    * @returns {Promise<any>}
    */
   async _loadTable() {
-    TokenMold.log(TokenMold.LOG_LEVEL.Debug, "_loadTable");
+    TokenLog.log(TokenLog.LOG_LEVEL.Debug, "_loadTable");
     let document;
     try {
       document = await fromUuid(this.settings.name.prefix.table);
@@ -239,7 +193,7 @@ export default class TokenMold {
    * @returns {Promise<any>}
    */
   async _getRolltables() {
-    TokenMold.log(TokenMold.LOG_LEVEL.Debug, "_getRolltables");
+    TokenLog.log(TokenLog.LOG_LEVEL.Debug, "_getRolltables");
     const rollTablePacks = game.packs.filter((e) => e.documentName === "RollTable", );
 
     this._rollTableList = {};
@@ -261,7 +215,7 @@ export default class TokenMold {
         });
       }
     }
-    TokenMold.log(TokenMold.LOG_LEVEL.Debug, "Rollable Tables found", this._rollTableList,);
+    TokenLog.log(TokenLog.LOG_LEVEL.Debug, "Rollable Tables found", this._rollTableList,);
   }
 
   /**
@@ -271,7 +225,7 @@ export default class TokenMold {
    * @return {Promise<any>}
    */
   async _hookActorDirectory(html) {
-    TokenMold.log(TokenMold.LOG_LEVEL.Debug, "_hookActorDirectory");
+    TokenLog.log(TokenLog.LOG_LEVEL.Debug, "_hookActorDirectory");
     this.section = document.createElement("section");
     this.section.classList.add("token-mold");
     // Add menu before directory header
@@ -288,7 +242,7 @@ export default class TokenMold {
    * @returns {Promise<any>}
    */
   async _renderActorDirectoryMenu() {
-    TokenMold.log(TokenMold.LOG_LEVEL.Debug, "_renderActorDirectoryMenu");
+    TokenLog.log(TokenLog.LOG_LEVEL.Debug, "_renderActorDirectoryMenu");
     const section = this.section;
     section.insertAdjacentHTML(
       "afterbegin",
@@ -298,7 +252,7 @@ export default class TokenMold {
             <input class='name rollable' type='checkbox' name='name.use' ${this.settings.name.use ? "checked" : ""}><span><span class='checkmark'></span>&nbsp;Name</span>
         </label>
         ${
-          TokenMold.SUPPORTED_ROLLHP.includes(game.system.id)
+          TokenConsts.SUPPORTED_ROLLHP.includes(game.system.id)
             ? `
         <label class='label-inp' title='(De-)activate Hit Point rolling'>
             <input class='hp rollable' type='checkbox' name='hp.use' ${this.settings.hp.use ? "checked" : ""}><span><span class='checkmark'></span>&nbsp;HP</span>
@@ -349,7 +303,7 @@ export default class TokenMold {
    * @returns {void}
    */
   _updateCheckboxes() {
-    TokenMold.log(TokenMold.LOG_LEVEL.Debug, "_updateCheckboxes");
+    TokenLog.log(TokenLog.LOG_LEVEL.Debug, "_updateCheckboxes");
     const inputs = document.querySelectorAll("section.token-mold input");
     inputs.forEach((el) => {
       const name = el.name;
@@ -365,7 +319,7 @@ export default class TokenMold {
    * @return {object}
    */
   _setTokenData(scene, tokenData) {
-    TokenMold.log(TokenMold.LOG_LEVEL.Debug, "_setTokenData");
+    TokenLog.log(TokenLog.LOG_LEVEL.Debug, "_setTokenData");
     const actor = game.actors.get(tokenData.actorId);
     const newData = { _id: tokenData._id };
 
@@ -375,7 +329,7 @@ export default class TokenMold {
     }
 
     // Do this for all tokens, even player created ones
-    if (this.settings.size.use && TokenMold.SUPPORTED_CREATURESIZE.includes(game.system.id)) {
+    if (this.settings.size.use && TokenConsts.SUPPORTED_CREATURESIZE.includes(game.system.id)) {
       this._setCreatureSize(newData, actor, scene);
     }
 
@@ -402,14 +356,14 @@ export default class TokenMold {
    * @returns {Promise<any>}
    */
   async _setHP(token) {
-    TokenMold.log(TokenMold.LOG_LEVEL.Debug, "_setHP");
+    TokenLog.log(TokenLog.LOG_LEVEL.Debug, "_setHP");
 
     if (!token.actor || (token.actorLink && this.settings.unlinkedOnly)) {
       // Don't for linked token
       return;
     }
 
-    if (TokenMold.SUPPORTED_ROLLHP.includes(game.system.id)) {
+    if (TokenConsts.SUPPORTED_ROLLHP.includes(game.system.id)) {
       if (this.settings.hp.use) {
         const val = await this._rollHP(token);
         token.actor.update({'system.attributes.hp': {value: val, max: val}});
@@ -422,7 +376,7 @@ export default class TokenMold {
    * @returns {Promise<Document[]>}
    */
   async _refreshSelected() {
-    TokenMold.log(TokenMold.LOG_LEVEL.Debug, "_refreshSelected");
+    TokenLog.log(TokenLog.LOG_LEVEL.Debug, "_refreshSelected");
     const selected = canvas.tokens.controlled;
     let udata = [];
     for (const token of selected) {
@@ -437,28 +391,91 @@ export default class TokenMold {
   }
 
   /**
+   * displayBars.use
+   * displayBars.value
+   * bar1.use
+   * bar1.attribute
+   * bar2.use
+   * bar2.attribute
+   * displayName.use
+   * displayName.value
+   * disposition.use
+   * disposition.value
+   * vision.use  -- (internal)
+   * vision.value  -- now sight.enbled
+   * scale.use  -- (internal)
+   * scale.min  -- now texture.scaleX and  texture.scaleY
+   * scale.max  -- now texture.scaleX and  texture.scaleY
+   * rotation.use
+   * rotation.min
+   * rotation.max
+   * mirrorX.use  -- now texture.scaleX
+   * mirrorY.use  -- now texture.scaleY
    *
    * @param {TokenData} tokenData
-   * @param {Actor}     actor
+   * @param {Actor}     actor  // not needed?
    *
    * @returns {void}
    */
   _overwriteConfig(tokenData, actor) {
-    TokenMold.log(TokenMold.LOG_LEVEL.Debug, "_overwriteConfig");
+    TokenLog.log(TokenLog.LOG_LEVEL.Debug, "_overwriteConfig");
     for (let [key, value] of Object.entries(this.settings.config)) {
+      TokenLog.log(TokenLog.LOG_LEVEL.Debug, "Key: ", key, "; Value: ", value);
       if (value.use !== true) {
         continue;
       }
-      if (value.value !== undefined) {
-        tokenData[key] = value.value;
-      } else if (value.min !== undefined && value.max !== undefined) {
-        let val = tokenData[key] || 1;
-        tokenData[key] = (val * Math.floor((Math.random() * (value.max - value.min) + value.min) * 100, )) / 100;
-      } else if (value.attribute !== undefined && (value.attribute === "" || foundry.utils.getProperty(actor, value.attribute) !== undefined) ) {
-        tokenData[key].attribute = value.attribute;
-      } else if ( value.attribute === undefined && value.min === undefined && value.max === undefined && value.value === undefined ) {
-        // Random mirroring
-        tokenData[key] = Boolean(Math.round(Math.random()));
+      switch(key)
+      {
+        case "displayBars":
+          tokenData[key] = value.value;
+          break;
+        case "displayName":
+          tokenData[key] = value.value;
+          break;
+        case "disposition":
+          tokenData[key] = value.value;
+          break;
+        case "vision":
+          tokenData["sight.enabled"] = value.value;
+          break;
+        case "bar1": // works -- sort of
+          //if (value.attribute === "" || foundry.utils.getProperty(actor, value.attribute) !== undefined) // ??
+          tokenData["bar1.attribute"] = value.attribute;
+          break;
+        case "bar2": // works -- sort of
+          //if (value.attribute === "" || foundry.utils.getProperty(actor, value.attribute) !== undefined) // ??
+          tokenData["bar2.attribute"] = value.attribute;
+          break;
+        case "scale":
+          let scaleX = tokenData["texture.scaleX"] || 1;
+          let scaleY = tokenData["texture.scaleY"] || 1;
+          let scale = Math.floor((Math.random() * (value.max - value.min) + value.min) * 100, );
+          tokenData["texture.scaleX"] = (scaleX * scale) / 100;
+          tokenData["texture.scaleY"] = (scaleY * scale) / 100;
+          break;
+        case "rotation":
+          let rot = tokenData[key] || 1;
+          tokenData[key] = (rot * Math.floor((Math.random() * (value.max - value.min) + value.min) * 100, )) / 100;
+          break;
+        case "mirrorX":
+          let mirrorX = Boolean(Math.round(Math.random()));
+          if (mirrorX)
+          {
+            let scaleX = tokenData["texture.scaleX"] || 1;
+            tokenData["texture.scaleX"] = -1 * scaleX;
+          }
+          break;
+        case "mirrorY":
+          let mirrorY = Boolean(Math.round(Math.random()));
+          if (mirrorY)
+          {
+            let scaleY = tokenData["texture.scaleY"] || 1;
+            tokenData["texture.scaleY"] = -1 * scaleY;
+          }
+          break;
+        default:
+          TokenLog.log(TokenLog.LOG_LEVEL.Error, "_overwriteConfig: Key: '", key, "' does not exist.");
+          break;
       }
     }
   }
@@ -470,7 +487,7 @@ export default class TokenMold {
    * @returns {Promise<any>}
    */
   async _rollHP(token) {
-    TokenMold.log(TokenMold.LOG_LEVEL.Debug, "_rollHP");
+    TokenLog.log(TokenLog.LOG_LEVEL.Debug, "_rollHP");
     const hpProperties = {
       dnd5e: "system.attributes.hp.formula",
       sw5e: "system.attributes.hp.formula",
@@ -479,15 +496,15 @@ export default class TokenMold {
 
     const formula = foundry.utils.getProperty(token.actor, hpProperties[game.system.id]);
     if (formula) {
-      TokenMold.log(TokenMold.LOG_LEVEL.Debug, "_rollHP.formula", formula );
+      TokenLog.log(TokenLog.LOG_LEVEL.Debug, "_rollHP.formula", formula );
 
       const constant = new Roll(formula.replace(" ", ""));
       constant.evaluateSync({strict: false}); // calculate the constant portion
-      TokenMold.log(TokenMold.LOG_LEVEL.Debug, "_rollHP.constant.evaluateSync.total", constant.total );
+      TokenLog.log(TokenLog.LOG_LEVEL.Debug, "_rollHP.constant.evaluateSync.total", constant.total );
 
       const roll = new Roll(formula.replace(" ", ""));
       await roll.evaluate();
-      TokenMold.log(TokenMold.LOG_LEVEL.Debug, "_rollHP.roll.evaluate.total", roll.total );
+      TokenLog.log(TokenLog.LOG_LEVEL.Debug, "_rollHP.roll.evaluate.total", roll.total );
 
       if (this.settings.hp.toChat) {
         roll.toMessage({
@@ -497,7 +514,7 @@ export default class TokenMold {
       }
       // Make sure hp is at least 1 or the number of dice + constant value
       const min = Math.max(roll.dice[0].number + constant.total, 1);
-      TokenMold.log(TokenMold.LOG_LEVEL.Debug, "_rollHP.min", min );
+      TokenLog.log(TokenLog.LOG_LEVEL.Debug, "_rollHP.min", min );
       const val = Math.max(roll.total, min);
 
       return val;
@@ -516,10 +533,15 @@ export default class TokenMold {
    * @return {void}
    */
   _modifyName(tokenData, actor, scene) {
-    TokenMold.log(TokenMold.LOG_LEVEL.Debug, "_modifyName");
-    let name = tokenData.name;
+    TokenLog.log(TokenLog.LOG_LEVEL.Debug, "_modifyName");
+    // This would allow other modules/systems to modify the name and still get the prefix/suffix.
+    // Except on 'refresh' it keeps adding additional prefix/suffix.
+    //let name = tokenData.name;
+    let name = actor.prototypeToken.name;
 
-    if (["remove", "replace"].includes(this.settings.name.replace) && !(this.settings.name.baseNameOverride && event.getModifierState("Shift"))) {
+    // Temporarily removing baseNameOverride as shift-drag doesn't seem to work anymore
+    //if (["remove", "replace"].includes(this.settings.name.replace) && !(this.settings.name.baseNameOverride && getModifierState("Shift"))) {
+    if (["remove", "replace"].includes(this.settings.name.replace)) {
       name = "";
     }
 
@@ -616,7 +638,7 @@ export default class TokenMold {
    * @returns {string}
    */
   _chooseWeighted(items) {
-    TokenMold.log(TokenMold.LOG_LEVEL.Debug, "_chooseWeighted");
+    TokenLog.log(TokenLog.LOG_LEVEL.Debug, "_chooseWeighted");
     var keys = Object.keys(items);
     var vals = Object.values(items);
     var sum = vals.reduce((accum, elem) => accum + elem, 0);
@@ -635,7 +657,7 @@ export default class TokenMold {
    * @returns {string}
    */
   _chgCase(txt, fromCase, toCase) {
-    TokenMold.log(TokenMold.LOG_LEVEL.Debug, "_chgCase");
+    TokenLog.log(TokenLog.LOG_LEVEL.Debug, "_chgCase");
     var res = "";
     var c = "";
     for (c of txt) {
@@ -661,7 +683,7 @@ export default class TokenMold {
    * @return {string}
    */
   _pickNewName(actor) {
-    TokenMold.log(TokenMold.LOG_LEVEL.Debug, "_pickNewName");
+    TokenLog.log(TokenLog.LOG_LEVEL.Debug, "_pickNewName");
     const attributes = this.settings.name.options.attributes || [];
 
     let lang;
@@ -720,7 +742,7 @@ export default class TokenMold {
    * @return {number}
    */
   _dealphabetize(num, letterStyle) {
-    TokenMold.log(TokenMold.LOG_LEVEL.Debug, "_dealphabetize");
+    TokenLog.log(TokenLog.LOG_LEVEL.Debug, "_dealphabetize");
     if (num === "0") {
       return 0;
     }
@@ -745,7 +767,7 @@ export default class TokenMold {
    * @return {string}
    */
   _alphabetize(num, letterStyle) {
-    TokenMold.log(TokenMold.LOG_LEVEL.Debug, "_alphabetize");
+    TokenLog.log(TokenLog.LOG_LEVEL.Debug, "_alphabetize");
     let ret = "";
 
     const startValue = {
@@ -771,7 +793,7 @@ export default class TokenMold {
    * @return {string}
    */
   _romanize(num) {
-    TokenMold.log(TokenMold.LOG_LEVEL.Debug, "_romanize");
+    TokenLog.log(TokenLog.LOG_LEVEL.Debug, "_romanize");
     if (!+num) {
       return false;
     }
@@ -824,7 +846,7 @@ export default class TokenMold {
    * @return {number}
    */
   _deromanize(rom) {
-    TokenMold.log(TokenMold.LOG_LEVEL.Debug, "_deromanize");
+    TokenLog.log(TokenLog.LOG_LEVEL.Debug, "_deromanize");
     if (typeof rom !== "string") {
       return 0;
     }
@@ -869,7 +891,7 @@ export default class TokenMold {
    * @return {void}
    */
   _setCreatureSize(newData, actor, scene) {
-    TokenMold.log(TokenMold.LOG_LEVEL.Debug, "_setCreatureSize");
+    TokenLog.log(TokenLog.LOG_LEVEL.Debug, "_setCreatureSize");
     const sizes = {
       tiny: 0.5,
       sm: 0.8,
@@ -914,7 +936,7 @@ export default class TokenMold {
    * @return {void}
    */
   registerSettings() {
-    TokenMold.log(TokenMold.LOG_LEVEL.Debug, "registerSettings");
+    TokenLog.log(TokenLog.LOG_LEVEL.Debug, "registerSettings");
     // register settings
     game.settings.register("Token-Mold", "everyone", {
       name: "Token Mold Settings",
@@ -934,7 +956,7 @@ export default class TokenMold {
    * @return {object}
    */
   defaultSettings() {
-    TokenMold.log(TokenMold.LOG_LEVEL.Info, "Loading defaultSettings");
+    TokenLog.log(TokenLog.LOG_LEVEL.Info, "Loading defaultSettings");
     return {
       unlinkedOnly: true,
       name: {
@@ -1029,7 +1051,7 @@ export default class TokenMold {
    * @return {void}
    */
   loadSettings() {
-    TokenMold.log(TokenMold.LOG_LEVEL.Debug, "loadSettings");
+    TokenLog.log(TokenLog.LOG_LEVEL.Debug, "loadSettings");
     this.settings = game.settings.get("Token-Mold", "everyone");
     // Check for old data
     if (!this.settings) {
@@ -1052,7 +1074,7 @@ export default class TokenMold {
     }
     this.settings = foundry.utils.mergeObject(this.defaultSettings(), this.settings);
 
-    if (TokenMold.SUPPORTED_5ESKILLS.includes(game.system.id)) {
+    if (TokenConsts.SUPPORTED_5ESKILLS.includes(game.system.id)) {
       if (this.settings.name.options === undefined) {
         const dndOptions = this.dndDefaultNameOptions;
         this.settings.name.options.default = dndOptions.default;
@@ -1060,7 +1082,7 @@ export default class TokenMold {
       }
     }
     this._loadDicts();
-    TokenMold.log(TokenMold.LOG_LEVEL.Debug, "Loading Settings", this.settings, );
+    TokenLog.log(TokenLog.LOG_LEVEL.Debug, "Loading Settings", this.settings, );
   }
 
   /**
@@ -1068,7 +1090,7 @@ export default class TokenMold {
    * @return {object}
    */
   get dndDefaultNameOptions() {
-    TokenMold.log(TokenMold.LOG_LEVEL.Debug, "dndDefaultNameOptions");
+    TokenLog.log(TokenLog.LOG_LEVEL.Debug, "dndDefaultNameOptions");
     return {
       default: "random",
       attributes: [
@@ -1125,20 +1147,20 @@ export default class TokenMold {
    * @return {Promise<>}
    */
   async saveSettings() {
-    TokenMold.log(TokenMold.LOG_LEVEL.Debug, "saveSettings");
+    TokenLog.log(TokenLog.LOG_LEVEL.Debug, "saveSettings");
     if (this.adjectives || this.adjectives.uuid !== this.settings.name.prefix.table) {
       this._loadTable();
     }
 
     if (this.settings.name.replace === "remove" && !this.settings.name.number.use && !this.settings.name.prefix.use) {
       this.settings.name.replace = "nothing";
-      TokenMold.log(TokenMold.LOG_LEVEL.Warn, game.i18n.localize("tmold.warn.removeName"), );
+      TokenLog.log(TokenLog.LOG_LEVEL.Warn, game.i18n.localize("tmold.warn.removeName"), );
       ui.notifications.warn(game.i18n.localize("tmold.warn.removeName"));
     }
 
     await game.settings.set("Token-Mold", "everyone", this.settings);
     this._loadDicts();
-    TokenMold.log(TokenMold.LOG_LEVEL.Debug, "Saving Settings", this.settings, );
+    TokenLog.log(TokenLog.LOG_LEVEL.Debug, "Saving Settings", this.settings, );
   }
 
   /**
@@ -1146,7 +1168,7 @@ export default class TokenMold {
    * @return {Promise<object>}
    */
   async _getBarAttributes() {
-    TokenMold.log(TokenMold.LOG_LEVEL.Debug, "_getBarAttributes");
+    TokenLog.log(TokenLog.LOG_LEVEL.Debug, "_getBarAttributes");
     const types = CONFIG.Actor.documentClass.TYPES.filter(x => x !== 'base');
     let barData = { bar: {}, value: {} };
     let addElement = (obj, key, val) => {
@@ -1168,7 +1190,7 @@ export default class TokenMold {
           addElement(barData.value, val.join("."), type);
         }
       } catch (e) {
-        TokenMold.log(TokenMold.LOG_LEVEL.Debug, "Error navigating document class type!", type, e, );
+        TokenLog.log(TokenLog.LOG_LEVEL.Debug, "Error navigating document class type!", type, e, );
       }
     }
     return barData;
