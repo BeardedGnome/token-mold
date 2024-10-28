@@ -6,7 +6,7 @@ export default class TokenLog {
     Warn: 2,
     Error: 3,
   });
-  static CURRENT_LOG_LEVEL = TokenLog.LOG_LEVEL.Debug; // FIXME: Restore Info
+  static CURRENT_LOG_LEVEL = TokenLog.LOG_LEVEL.Info;
 
   /**
    *
