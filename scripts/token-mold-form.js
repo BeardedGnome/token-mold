@@ -404,6 +404,55 @@ export default class TokenMoldForm extends HandlebarsApplicationMixin(
         // only splice array when item is found
         options.parts.splice(index, 1); // 2nd parameter means remove one item only
       }
+      switch (partId) {
+        case "infoHelp":
+          break;
+        case "name":
+          // probably not the smartest way
+          let langs = {};
+          Object.assign(langs, {
+            ["random"]: game.i18n.localize("tmold.name.random"),
+          });
+          partContext.languages = TokenConsts.LANGUAGES.reduce(
+            (languages, language) =>
+              Object.assign(languages, { [language]: language }),
+            langs
+          );
+          partContext.numberStyles = TokenMoldForm.#NUMBER_SYTLES;
+          partContext.prefixPositions = TokenMoldForm.#PREFIX_POSITIONS;
+          partContext.nameReplaceOptions = TokenMoldForm.#NAME_REPLACE_OPTIONS;
+          partContext.rollTableList = this.object._rollTableList;
+          break;
+        case "systemSpecific":
+          partContext.showCreatureSize =
+            TokenConsts.SUPPORTED_CREATURESIZE.includes(game.system.id);
+          partContext.showHP = TokenConsts.SUPPORTED_ROLLHP.includes(
+            game.system.id
+          );
+          break;
+        case "defaultConfig":
+          const PrototypeTokenConfig =
+            foundry.applications.sheets.PrototypeTokenConfig;
+          partContext.barAttributes = this.barAttributes;
+          partContext.displayModes = PrototypeTokenConfig.DISPLAY_MODES;
+          partContext.dispositions = PrototypeTokenConfig.TOKEN_DISPOSITIONS;
+          break;
+        case "statOverlay":
+          partContext.defaultIcons = TokenMoldForm.#DEFAULT_ICONS.reduce(
+            (icons, icon) => Object.assign(icons, { [icon]: icon }),
+            {}
+          );
+          break;
+        case "footer":
+          partContext.buttons = this.#prepareButtons();
+          break;
+      }
+      TokenLog.log(
+        TokenLog.LOG_LEVEL.Debug,
+        "TokenMoldForm: Prepared Part Context",
+        partContext
+      );
+      return partContext;
     }
   }
 
