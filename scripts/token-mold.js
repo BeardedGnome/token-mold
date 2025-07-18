@@ -296,7 +296,7 @@ export default class TokenMold {
     dirHeader.parentNode.insertBefore(this.section, dirHeader);
 
     if (this.settings !== undefined) {
-      this._renderActorDirectoryMenu(options);
+      this._renderActorDirectoryMenu();
     }
     TokenLog.log(TokenLog.LOG_LEVEL.Debug, "_hookActorDirectory Complete");
   }
@@ -306,7 +306,7 @@ export default class TokenMold {
    *
    * @returns {Promise<any>}
    */
-  async _renderActorDirectoryMenu(options) {
+  async _renderActorDirectoryMenu() {
     TokenLog.log(TokenLog.LOG_LEVEL.Debug, "_renderActorDirectoryMenu");
     const section = this.section;
     section.insertAdjacentHTML(
@@ -1195,28 +1195,28 @@ export default class TokenMold {
     };
   }
 
-    /**
-     *
-     * @return {object[]}
-     * @private
-     */
-    get #defaultAttrs() {
-      TokenLog.log(TokenLog.LOG_LEVEL.Debug, "#defaultAttrs");
-      if (TokenConsts.SUPPORTED_5ESKILLS.includes(game.system.id)) {
-        return [
-          {
-            icon: '&#xf06e;', // <i class="fa-solid fa-eye"></i>
-            path: 'system.skills.prc.passive',
-          },
-          {
-            icon: '&#xf3ed;', // <i class="fa-solid fa-shield-halved"></i>
-            path: 'system.attributes.ac.value',
-          },
-        ];
-      } else {
-        return [];
-      }
+  /**
+   *
+   * @return {object[]}
+   * @private
+   */
+  get #defaultAttrs() {
+    TokenLog.log(TokenLog.LOG_LEVEL.Debug, "#defaultAttrs");
+    if (TokenConsts.SUPPORTED_5ESKILLS.includes(game.system.id)) {
+      return [
+        {
+          icon: "&#xf06e;", // <i class="fa-solid fa-eye"></i>
+          path: "system.skills.prc.passive",
+        },
+        {
+          icon: "&#xf3ed;", // <i class="fa-solid fa-shield-halved"></i>
+          path: "system.attributes.ac.value",
+        },
+      ];
+    } else {
+      return [];
     }
+  }
 
   /**
    *
