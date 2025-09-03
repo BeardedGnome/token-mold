@@ -1220,29 +1220,6 @@ export default class TokenMold {
 
   /**
    *
-   * @return {object[]}
-   * @private
-   */
-  get #defaultAttrs() {
-    TokenLog.log(TokenLog.LOG_LEVEL.Debug, "#defaultAttrs");
-    if (TokenConsts.SUPPORTED_5ESKILLS.includes(game.system.id)) {
-      return [
-        {
-          icon: "&#xf06e;", // <i class="fa-solid fa-eye"></i>
-          path: "system.skills.prc.passive",
-        },
-        {
-          icon: "&#xf3ed;", // <i class="fa-solid fa-shield-halved"></i>
-          path: "system.attributes.ac.value",
-        },
-      ];
-    } else {
-      return [];
-    }
-  }
-
-  /**
-   *
    * @return {void}
    * @private
    */
