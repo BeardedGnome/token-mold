@@ -1,3 +1,8 @@
+# v2.23.2
+
+- Update CSS to scope fa-solid to token-mold
+- Default automatic token sizing/scaling to off (dnd5e/pf2e only)
+
 # v2.23.1
 
 - Updated to support DnD5e 5.x and Foundry v13
